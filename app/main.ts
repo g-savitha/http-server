@@ -1,3 +1,4 @@
+import { readFileSync } from "fs";
 import * as net from "net";
 
 // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -38,6 +39,25 @@ const server = net.createServer((socket) => {
         response += `Content-Type: text/plain\r\nContent-Length: ${userAgent.length}\r\n\r\n${userAgent}`;
         writeResponse(response);
         break;
+      }
+      case 'files': {
+        const fileName = path.split('/')[2];
+        const args = process.argv.slice(2);
+        const [_, absPath] = args;
+        const file = absPath + fileName;
+        console.log(args);
+        console.log(file);
+        if (file) {
+          const fileContent = readFileSync(file);
+          response += `Content-Type: application/octet-stream\r\nContent-Length: ${fileContent.length}\r\n\r\n${fileContent}`
+          writeResponse(response);
+          break;
+        }
+        else {
+          response = `HTTP/1.1 404 Not Found\r\n\r\n`;
+          writeResponse(response);
+          break;
+        }
       }
       default: {
         response = `HTTP/1.1 404 Not Found\r\n\r\n`;
