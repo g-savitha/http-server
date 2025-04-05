@@ -1,5 +1,7 @@
 import { readFileSync, writeFileSync } from "fs";
 import * as net from "net";
+import * as pathModule from "path";
+
 
 // You can use print statements as follows for debugging, they'll be visible when running tests.
 console.log("Logs from your program will appear here!");
@@ -44,12 +46,10 @@ const server = net.createServer((socket) => {
       }
       case 'files': {
         const fileName = path.split('/')[2];
-        console.log(`fileName : ${fileName}`);
+        const args = process.argv.slice(2);
+        const [_, absPath] = args;
+        const filePath = pathModule.join(absPath, fileName);
         if (httpMethod !== 'POST') {
-          const args = process.argv.slice(2);
-          const [_, absPath] = args;
-          console.log('args' + args);
-          const filePath = absPath + fileName;
           try {
             const fileContent = readFileSync(filePath);
             response += `Content-Type: application/octet-stream\r\nContent-Length: ${fileContent.length}\r\n\r\n${fileContent}`
@@ -61,7 +61,7 @@ const server = net.createServer((socket) => {
           }
         }
         else {
-          writeFileSync(fileName, body);
+          writeFileSync(filePath, body);
           response = `HTTP/1.1 201 Created\r\n\r\n`;
           writeResponse(response);
         }
