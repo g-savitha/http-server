@@ -10,7 +10,7 @@ const server = net.createServer((socket) => {
   });
   socket.on('data', (data) => {
     const request: string = data.toString();
-    const path: string = request.split(" ")[1];
+    const path: string = request.split(" ")[2];
 
     const query = path.split('/')[1];
     console.log(`path body`, query);
