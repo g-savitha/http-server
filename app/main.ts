@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import * as net from "net";
 
 // You can use print statements as follows for debugging, they'll be visible when running tests.
@@ -10,10 +10,11 @@ const server = net.createServer((socket) => {
     socket.end();
   });
   socket.on('data', (data) => {
-    const request: string = data.toString();
-    const path: string = request.split(" ")[1];
+    const [requestLine, ...headers] = data.toString().split("\r\n");
+    const [body] = headers.splice(headers.length - 1);
+    const [httpMethod, path] = requestLine.split(" ");
     let params = path.split('/')[1];
-    console.log(params);
+
 
     const writeResponse = (response: string): void => {
       socket.write(response);
@@ -35,23 +36,33 @@ const server = net.createServer((socket) => {
         break;
       }
       case 'user-agent': {
-        const userAgent: string = request.split("\r\n")[2].split(":")[1].trim();
+        const userAgent: string = headers[1].split("User-Agent: ")[1];
+        console.log("user agent", userAgent)
         response += `Content-Type: text/plain\r\nContent-Length: ${userAgent.length}\r\n\r\n${userAgent}`;
         writeResponse(response);
         break;
       }
       case 'files': {
         const fileName = path.split('/')[2];
-        const args = process.argv.slice(2);
-        const [_, absPath] = args;
-        const filePath = absPath + fileName;
-        try {
-          const fileContent = readFileSync(filePath);
-          response += `Content-Type: application/octet-stream\r\nContent-Length: ${fileContent.length}\r\n\r\n${fileContent}`
-          writeResponse(response);
+        console.log(`fileName : ${fileName}`);
+        if (httpMethod !== 'POST') {
+          const args = process.argv.slice(2);
+          const [_, absPath] = args;
+          console.log('args' + args);
+          const filePath = absPath + fileName;
+          try {
+            const fileContent = readFileSync(filePath);
+            response += `Content-Type: application/octet-stream\r\nContent-Length: ${fileContent.length}\r\n\r\n${fileContent}`
+            writeResponse(response);
+          }
+          catch (error) {
+            response = `HTTP/1.1 404 Not Found\r\n\r\n`;
+            writeResponse(response);
+          }
         }
-        catch (error) {
-          response = `HTTP/1.1 404 Not Found\r\n\r\n`;
+        else {
+          writeFileSync(fileName, body);
+          response = `HTTP/1.1 201 Created\r\n\r\n`;
           writeResponse(response);
         }
         break;
