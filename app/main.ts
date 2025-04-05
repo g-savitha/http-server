@@ -11,22 +11,40 @@ const server = net.createServer((socket) => {
   socket.on('data', (data) => {
     const request: string = data.toString();
     const path: string = request.split(" ")[1];
+    let params = path.split('/')[1];
+    console.log(params);
 
-    const query = path.split('/')[2];
-    console.log(`path body`, query);
+    const writeResponse = (response: string): void => {
+      socket.write(response);
+      socket.end();
+    }
 
     let response = `HTTP/1.1 200 OK\r\n`;
 
-    if (path === '/') {
-      response += `\r\n`;
+    switch (params) {
+      case '': {
+        response += '\r\n';
+        writeResponse(response);
+        break;
+      }
+      case 'echo': {
+        const query = path.split('/')[2];
+        response += `Content-Type: text/plain\r\nContent-Length: ${query.length}\r\n\r\n${query}`;
+        writeResponse(response);
+        break;
+      }
+      case 'user-agent': {
+        const userAgent: string = request.split("\r\n")[2].split(":")[1].trim();
+        response += `Content-Type: text/plain\r\nContent-Length: ${userAgent.length}\r\n\r\n${userAgent}`;
+        writeResponse(response);
+        break;
+      }
+      default: {
+        response = `HTTP/1.1 404 Not Found\r\n\r\n`;
+        writeResponse(response);
+        break;
+      }
     }
-    else if (path === `/echo/${query}`) {
-      response += `Content-Type: text/plain\r\nContent-Length: ${query.length}\r\n\r\n${query}`;
-    }
-    else {
-      response = `HTTP/1.1 404 Not Found\r\n\r\n`;
-    }
-    socket.write(response);
     socket.end();
   })
 });
