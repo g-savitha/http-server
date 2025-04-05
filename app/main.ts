@@ -9,9 +9,23 @@ const server = net.createServer((socket) => {
     socket.end();
   });
   socket.on('data', (data) => {
-    const request = data.toString();
-    const path = request.split(" ")[1];
-    const response = path === '/' ? `HTTP/1.1 200 OK\r\n\r\n` : `HTTP/1.1 404 Not Found\r\n\r\n`
+    const request: string = data.toString();
+    const path: string = request.split(" ")[1];
+
+    const query = path.split('/')[1];
+    console.log(`path body`, query);
+
+    let response = `HTTP/1.1 200 OK\r\n`;
+
+    if (path === '/') {
+      response += `\r\n`;
+    }
+    else if (path === `/echo/${query}`) {
+      response += `Content-Type: text/plain\r\nContent-Length: ${query}.length\r\n\r\n${query}`;
+    }
+    else {
+      response = `HTTP/1.1 404 Not Found\r\n`;
+    }
     socket.write(response);
     socket.end();
   })
