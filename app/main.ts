@@ -10,9 +10,9 @@ const server = net.createServer((socket) => {
   });
   socket.on('data', (data) => {
     const request: string = data.toString();
-    const path: string = request.split(" ")[2];
+    const path: string = request.split(" ")[1];
 
-    const query = path.split('/')[1];
+    const query = path.split('/')[2];
     console.log(`path body`, query);
 
     let response = `HTTP/1.1 200 OK\r\n`;
@@ -21,7 +21,7 @@ const server = net.createServer((socket) => {
       response += `\r\n`;
     }
     else if (path === `/echo/${query}`) {
-      response += `Content-Type: text/plain\r\nContent-Length: ${query}.length\r\n\r\n${query}`;
+      response += `Content-Type: text/plain\r\nContent-Length: ${query.length}\r\n\r\n${query}`;
     }
     else {
       response = `HTTP/1.1 404 Not Found\r\n\r\n`;
