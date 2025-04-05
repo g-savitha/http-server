@@ -24,7 +24,7 @@ const server = net.createServer((socket) => {
       response += `Content-Type: text/plain\r\nContent-Length: ${query}.length\r\n\r\n${query}`;
     }
     else {
-      response = `HTTP/1.1 404 Not Found\r\n`;
+      response = `HTTP/1.1 404 Not Found\r\n\r\n`;
     }
     socket.write(response);
     socket.end();
