@@ -48,14 +48,15 @@ const createResponse = (response: HttpResponse): string => {
 
 const handleEchoRequest = (path: string, headers: Record<string, string>): HttpResponse => {
   const echoText = path.split('/')[2];
-  const acceptEncoding = headers['Accept-Encoding'];
-
   const baseHeaders = {
     'Content-Type': 'text/plain',
     'Content-Length': echoText.length.toString(),
   }
 
-  const responseHeaders = (acceptEncoding === 'gzip') ? { ...baseHeaders, 'Content-Encoding': 'gzip' } : baseHeaders;
+  const acceptEncodingList: string[] = headers['Accept-Encoding']?.split(',').map(enc => enc.trim());
+  const hasGzipEncoding = acceptEncodingList?.includes('gzip')
+
+  const responseHeaders = (hasGzipEncoding) ? { ...baseHeaders, 'Content-Encoding': 'gzip' } : baseHeaders;
 
   return {
     statusCode: 200,
