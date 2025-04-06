@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "fs";
 import * as net from "net";
 import * as pathModule from "path";
+import { gzipSync } from "zlib";
 
 type HttpRequest = {
   method: string;
@@ -50,18 +51,31 @@ const handleEchoRequest = (path: string, headers: Record<string, string>): HttpR
   const echoText = path.split('/')[2];
   const baseHeaders = {
     'Content-Type': 'text/plain',
-    'Content-Length': echoText.length.toString(),
   }
 
-  const acceptEncodingList: string[] = headers['Accept-Encoding']?.split(',').map(enc => enc.trim());
-  const hasGzipEncoding = acceptEncodingList?.includes('gzip')
+  const acceptEncoding = headers['Accept-Encoding'];
+  const hasGzipEncoding = acceptEncoding === 'gzip' || acceptEncoding?.split(',').map(enc => enc.trim()).includes('gzip');
 
-  const responseHeaders = (hasGzipEncoding) ? { ...baseHeaders, 'Content-Encoding': 'gzip' } : baseHeaders;
-
+  if (hasGzipEncoding) {
+    const compressedBody = gzipSync(echoText);
+    return {
+      statusCode: 200,
+      statusText: 'OK',
+      headers: {
+        ...baseHeaders,
+        'Content-Encoding': 'gzip',
+        'Content-Length': compressedBody.length.toString(),
+      },
+      body: compressedBody
+    }
+  }
   return {
     statusCode: 200,
     statusText: 'OK',
-    headers: responseHeaders,
+    headers: {
+      ...baseHeaders,
+      'Content-Length': echoText.length.toString()
+    },
     body: echoText
   };
 }
