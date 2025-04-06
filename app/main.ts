@@ -31,20 +31,20 @@ const parseRequest = (data: Buffer): HttpRequest => {
   });
   return { method, path, headers, body };
 }
-const createResponse = (response: HttpResponse): string => {
+const createResponse = (response: HttpResponse): Buffer => {
   const { statusCode, statusText, headers, body } = response;
-  let responseString = `HTTP/1.1 ${statusCode} ${statusText}\r\n`;
+  let headerString = `HTTP/1.1 ${statusCode} ${statusText}\r\n`;
 
   Object.entries(headers).forEach(([key, value]) => {
-    responseString += `${key}: ${value}\r\n`
+    headerString += `${key}: ${value}\r\n`
   });
 
-  responseString += `\r\n`;
+  headerString += `\r\n`;
 
-  if (body) {
-    responseString += body;
-  }
-  return responseString;
+  const headerBuffer = Buffer.from(headerString);
+  const bodyBuffer = typeof body === 'string' ? Buffer.from(body) : body;
+
+  return Buffer.concat([headerBuffer, bodyBuffer || Buffer.alloc(0)])
 }
 
 const handleEchoRequest = (path: string, headers: Record<string, string>): HttpResponse => {
