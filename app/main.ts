@@ -57,13 +57,14 @@ const handleEchoRequest = (path: string, headers: Record<string, string>): HttpR
   const hasGzipEncoding = acceptEncoding === 'gzip' || acceptEncoding?.split(',').map(enc => enc.trim()).includes('gzip');
 
   if (hasGzipEncoding) {
-    const compressedBody = gzipSync(echoText);
+    const textBuffer = Buffer.from(echoText, 'utf8');
+    const compressedBody = gzipSync(textBuffer);
     return {
       statusCode: 200,
       statusText: 'OK',
       headers: {
-        ...baseHeaders,
         'Content-Encoding': 'gzip',
+        ...baseHeaders,
         'Content-Length': compressedBody.length.toString(),
       },
       body: compressedBody
